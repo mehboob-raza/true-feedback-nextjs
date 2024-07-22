@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import {useDebounceValue} from 'usehooks-ts'
+import {useDebounceCallback, useDebounceValue} from 'usehooks-ts'
 import { useToast } from "@/components/ui/use-toast"
 import { useRouter } from "next/navigation"
 import { signUpSchema } from "@/schemas/SignUpSchema"
@@ -16,13 +16,13 @@ import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
 
-const SignIn = () => {
+const SignUp = () => {
   const [username, setUsername] = useState('')  
   const [usernameMessage, setUsernameMessage] = useState('')  
   const [isCheckingUsername, setIsCheckingUsername] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const debouncedUsername = useDebounceValue(username, 300)
+  const debounced = useDebounceCallback(setUsername, 300)
     const { toast } = useToast()
   const router = useRouter()
 
@@ -38,11 +38,11 @@ const SignIn = () => {
 
   useEffect(() => {
     const checkUniqueUsername = async () => {
-      if (debouncedUsername) {
+      if (username) {
         setIsCheckingUsername(true )
         setUsernameMessage('')
         try {
-          const response = await axios.get(`/api/check-username-unique?username=${debouncedUsername}`)
+          const response = await axios.get(`/api/check-username-unique?username=${username}`)
           setUsernameMessage(response.data.message)
           
         } catch (error) {
@@ -54,7 +54,7 @@ const SignIn = () => {
       }
     }
     checkUniqueUsername()
-  },[debouncedUsername])
+  },[username])
 
   const onSubmit = async(data : z.infer<typeof signUpSchema >) => {
     setIsSubmitting(true)
@@ -101,10 +101,16 @@ const SignIn = () => {
                       {...field}
                       onChange={(e) => {
                         field.onChange(e)
-                        setUsername(e.target.value)
+                        debounced(e.target.value)
                       }}
                     />
                   </FormControl>
+                  {
+                        isCheckingUsername && <Loader2 className="animate-spin" />
+                      }
+                      <p className={`text-sm ${usernameMessage === 'Username is unique' ? 'text-green-500' : 'text-red-500'}`}>
+                          test {usernameMessage}
+                      </p>
                   <FormMessage />
                 </FormItem>
               )}
@@ -161,4 +167,4 @@ const SignIn = () => {
   )
 }
 
-export default SignIn
+export default SignUp
