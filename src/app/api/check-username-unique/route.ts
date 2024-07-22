@@ -34,12 +34,11 @@ export async function GET(request: Request) {
                 message: 'Username already taken by another'
             }, { status: 400 })
         }
-        else {
-            return Response.json({
-                success: true,
-                message: 'Username is unique'
-            }, { status: 200 })
-        }
+        return Response.json({
+            success: true,
+            message: 'Username is unique'
+        }, { status: 200 })
+
     } catch (error) {
         console.error(error);
         return Response.json({
