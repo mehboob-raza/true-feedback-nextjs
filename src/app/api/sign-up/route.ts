@@ -55,7 +55,7 @@ export async function POST(req: Request, res: Response) {
             await newUser.save()
         }
 
-        // send verification email 
+        // send verification email
         const emailResponse = await sendVerificationEmail(
             email, username, verifyCode
         )
@@ -84,4 +84,5 @@ export async function POST(req: Request, res: Response) {
 
     }
 }
+
 
