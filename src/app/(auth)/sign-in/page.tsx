@@ -15,69 +15,51 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
+import { signInSchema } from "@/schemas/SignInSchema"
+import { signIn } from "next-auth/react"
 
 const SignIn = () => {
-  const [username, setUsername] = useState('')  
-  const [usernameMessage, setUsernameMessage] = useState('')  
-  const [isCheckingUsername, setIsCheckingUsername] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const debouncedUsername = useDebounceValue(username, 300)
     const { toast } = useToast()
   const router = useRouter()
 
   // zod implementation 
-  const form = useForm<z.infer<typeof signUpSchema>>({
-    resolver: zodResolver(signUpSchema),
+  const form = useForm<z.infer<typeof signInSchema>>({
+    resolver: zodResolver(signInSchema),
     defaultValues: {
-      username: '',
-      email: '',
+      identifier: '',
       password: '',
     }
   })
 
-  useEffect(() => {
-    const checkUniqueUsername = async () => {
-      if (debouncedUsername) {
-        setIsCheckingUsername(true )
-        setUsernameMessage('')
-        try {
-          const response = await axios.get(`/api/check-username-unique?username=${debouncedUsername}`)
-          setUsernameMessage(response.data.message)
-          
-        } catch (error) {
-          const axiosError = error as AxiosError<ApiResponse>
-          setUsernameMessage(axiosError.response?.data.message ?? "Error Checking Username")
-        } finally {
-          setIsCheckingUsername(false)
-        }
-      }
-    }
-    checkUniqueUsername()
-  },[debouncedUsername])
 
-  const onSubmit = async(data : z.infer<typeof signUpSchema >) => {
-    setIsSubmitting(true)
-    try {
-      const response = await axios.post<ApiResponse>(`/api/sign-up`, data)
-      toast({
-        title: 'Success',
-        description: response.data.message
+
+  const onSubmit = async(data : z.infer<typeof signInSchema >) => {
+    const result = await signIn('credentials', {
+      redirect: false,
+      identifier : data.identifier,
+      password : data.password
+    })    
+    if (result?.error) {
+      if (result.error == 'CredentialsSignin') {
+        toast({
+        title: 'Login Failed',
+        description: 'Incorrect credentials',
+        variant: 'destructive'
       })
-      router.replace(`/verify/${username}`)
-    } catch (error) {
-      console.log('Error in Signing up to User', error);
+      } else {
+        toast({
+        title: 'Error',
+        description: result.error,
+        variant: 'destructive'
+      })
+      }
       
-      const axiosError = error as AxiosError<ApiResponse>
-      let errorMessage = axiosError?.response?.data.message 
-      toast({
-        title: 'Signup Failed',
-        description: errorMessage,
-        variant : "destructive"
-      })
-      setIsSubmitting(false)
+    } 
+    if (result?.url) {
+      router.replace('/dashboard')
     }
-  }
+  }       
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
@@ -90,33 +72,15 @@ const SignIn = () => {
         </div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            
             <FormField
-              name="username"
+              name="identifier"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>Email/Username</FormLabel>
                   <FormControl>
-                    <Input placeholder="Username"
-                      {...field}
-                      onChange={(e) => {
-                        field.onChange(e)
-                        setUsername(e.target.value)
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="email"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Email" {...field}        
+                    <Input placeholder="Email/Username" {...field}        
                     />
                   </FormControl>
                   <FormMessage />
@@ -137,21 +101,15 @@ const SignIn = () => {
               )}
             />
             <Button type='submit' disabled={isSubmitting}>
-              {
-                isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please Wait
-                  </>
-                ) : ( 'SignUp' )
-              }
+              SignIn 
             </Button>
           </form>
         </Form>
         <div className="text-center mt-4">
           <p>
-            Already a Member? {' '}
-            <Link href="/sign-in" className="text-blue-600 hover:text-blue-800">
-            Sign In
+            New? Register Here {' '}
+            <Link href="/sign-up" className="text-blue-600 hover:text-blue-800">
+            Sign Up
             </Link>
           </p>
 
