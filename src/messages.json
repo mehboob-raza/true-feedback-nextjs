@@ -1,0 +1,17 @@
+[
+    {
+        "title":"Message 1",
+        "content": "How's your Day",
+        "recieved" : "10 minutes ago"
+    },
+    {
+        "title":"Message 2",
+        "content": "How's you Doing",
+        "recieved" : "10 minutes ago"
+    },
+    {
+        "title":"Message 3",
+        "content": "What's your Passion",
+        "recieved" : "10 minutes ago"
+    }
+]
